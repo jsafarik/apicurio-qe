@@ -6,11 +6,13 @@ import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Condition.visible;
 
 import apicurito.tests.utils.slenide.OperationUtils;
+
 import org.openqa.selenium.By;
 
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
 
+import java.util.Arrays;
 import java.util.List;
 
 import apicurito.tests.utils.slenide.CommonUtils;
@@ -55,17 +57,19 @@ public class MainPageSteps {
     public void createNewPathWithLink(DataTable table) {
         for (List<String> dataRow : table.cells()) {
             if (Boolean.valueOf(dataRow.get(1))) {
-                CommonUtils.getClickableLink(CommonUtils.Sections.PATH, CommonUtils.getAppRoot().shouldBe(visible, enabled).shouldNotHave(attribute("disabled")))
-                        .click();
+                CommonUtils.getClickableLink(CommonUtils.Sections.PATH,
+                    CommonUtils.getAppRoot().shouldBe(visible, enabled).shouldNotHave(attribute("disabled")))
+                    .click();
             } else {
-                CommonUtils.getNewPlusSignButton(CommonUtils.Sections.PATH, CommonUtils.getAppRoot().shouldBe(visible, enabled).shouldNotHave(attribute("disabled")))
-                        .click();
+                CommonUtils.getNewPlusSignButton(CommonUtils.Sections.PATH,
+                    CommonUtils.getAppRoot().shouldBe(visible, enabled).shouldNotHave(attribute("disabled")))
+                    .click();
             }
 
             CommonUtils.getLabelWithName("path", CommonUtils.getAppRoot().shouldBe(visible, enabled).shouldNotHave(attribute("disabled")))
-                    .setValue("/" + dataRow.get(0));
+                .setValue("/" + dataRow.get(0));
             CommonUtils.getButtonWithText("Add", CommonUtils.getAppRoot()).shouldBe(visible, enabled).shouldNotHave(attribute("disabled"))
-                    .click();
+                .click();
         }
     }
 
@@ -82,9 +86,9 @@ public class MainPageSteps {
         se.click();
 
         CommonUtils.getLabelWithName("title-input", CommonUtils.getAppRoot())
-                .setValue(newName);
+            .setValue(newName);
         CommonUtils.getButtonWithTitle("Save changes.", CommonUtils.getAppRoot().$("title-bar"))
-                .click();
+            .click();
     }
 
     @When("^set API version to \"([^\"]*)\"$")
@@ -133,11 +137,11 @@ public class MainPageSteps {
 
     /**
      * @param table parameters:
-     *              Name
-     *              Description OPTIONAL (could be empty string)
-     *              Example in json format OPTIONAL (could be empty string)
-     *              boolean if should be created with REST resources
-     *              boolean if should be created with Link
+     * Name
+     * Description OPTIONAL (could be empty string)
+     * Example in json format OPTIONAL (could be empty string)
+     * boolean if should be created with REST resources
+     * boolean if should be created with Link
      */
     @When("^create a new data type by link$")
     public void createANewDataType(DataTable table) {
@@ -166,11 +170,11 @@ public class MainPageSteps {
     public void createBasicSecuritySchemeWithValues(DataTable table) {
         for (List<String> dataRow : table.cells()) {
             CommonUtils.getNewPlusSignButton(CommonUtils.Sections.SCHEME, MainPageUtils.getMainPageRoot().$(MainPageElements.SECURITY_SECTION))
-                    .click();
+                .click();
             SelenideElement schemeEditor = MainPageUtils.getMainPageRoot().$(SecurityElements.SECURITY_SCHEME_EDITOR);
 
             CommonUtils.getLabelWithName("schemeName", schemeEditor)
-                    .setValue(dataRow.get(0));
+                .setValue(dataRow.get(0));
 
             if (!dataRow.get(1).isEmpty()) {
                 schemeEditor.$(SecurityElements.DESCRIPTION).setValue(dataRow.get(1));
@@ -179,7 +183,7 @@ public class MainPageSteps {
             CommonUtils.setDropDownValue("button", "BASIC", schemeEditor.$(SecurityElements.DROPDOWN));
 
             CommonUtils.getButtonWithText("Save", schemeEditor)
-                    .click();
+                .click();
         }
     }
 
@@ -187,11 +191,11 @@ public class MainPageSteps {
     public void createAPIKeySecuritySchemeWithValues(DataTable table) {
         for (List<String> dataRow : table.cells()) {
             CommonUtils.getNewPlusSignButton(CommonUtils.Sections.SCHEME, MainPageUtils.getMainPageRoot().$(MainPageElements.SECURITY_SECTION))
-                    .click();
+                .click();
             SelenideElement schemeEditor = MainPageUtils.getMainPageRoot().$(SecurityElements.SECURITY_SCHEME_EDITOR);
 
             CommonUtils.getLabelWithName("schemeName", schemeEditor)
-                    .setValue(dataRow.get(0));
+                .setValue(dataRow.get(0));
 
             if (!dataRow.get(1).isEmpty()) {
                 schemeEditor.$(SecurityElements.DESCRIPTION).setValue(dataRow.get(1));
@@ -204,10 +208,10 @@ public class MainPageSteps {
 
             if (!dataRow.get(3).isEmpty()) {
                 CommonUtils.getLabelWithType("text", schemeEditor.$(SecurityElements.API_KEY_AUTH))
-                        .setValue(dataRow.get(3));
+                    .setValue(dataRow.get(3));
             }
             CommonUtils.getButtonWithText("Save", schemeEditor)
-                    .click();
+                .click();
         }
     }
 
@@ -215,11 +219,11 @@ public class MainPageSteps {
     public void createOAuthSecuritySchemeWithValues(DataTable table) {
         for (List<String> dataRow : table.cells()) {
             CommonUtils.getNewPlusSignButton(CommonUtils.Sections.SCHEME, MainPageUtils.getMainPageRoot().$(MainPageElements.SECURITY_SECTION))
-                    .click();
+                .click();
             SelenideElement schemeEditor = MainPageUtils.getMainPageRoot().$(SecurityElements.SECURITY_SCHEME_EDITOR);
 
             CommonUtils.getLabelWithName("schemeName", schemeEditor)
-                    .setValue(dataRow.get(0));
+                .setValue(dataRow.get(0));
 
             if (!dataRow.get(1).isEmpty()) {
                 schemeEditor.$(SecurityElements.DESCRIPTION).setValue(dataRow.get(1));
@@ -232,22 +236,22 @@ public class MainPageSteps {
 
             if (!dataRow.get(3).isEmpty()) {
                 CommonUtils.getLabelWithName("authorizationUrl", schemeEditor.$(SecurityElements.OAUTH2_AUTH))
-                        .setValue(dataRow.get(3));
+                    .setValue(dataRow.get(3));
             }
 
             if (!dataRow.get(3).isEmpty()) {
                 CommonUtils.getLabelWithName("tokenUrl", schemeEditor.$(SecurityElements.OAUTH2_AUTH))
-                        .setValue(dataRow.get(4));
+                    .setValue(dataRow.get(4));
             }
             CommonUtils.getButtonWithText("Save", schemeEditor)
-                    .click();
+                .click();
         }
     }
 
     @When("^create security requirement with schemes$")
     public void createSecurityRequirementWithSchemes(DataTable table) {
         CommonUtils.getNewPlusSignButton(CommonUtils.Sections.REQUIREMENT, MainPageUtils.getMainPageRoot().$(MainPageElements.REQUIREMENTS_SECTION))
-                .click();
+            .click();
         SelenideElement requirementEditor = MainPageUtils.getMainPageRoot().$(SecurityElements.SECURITY_REQUIREMENT_EDITOR);
 
         for (List<String> dataRow : table.cells()) {
@@ -260,12 +264,14 @@ public class MainPageSteps {
             }
         }
         CommonUtils.getButtonWithText("Save", requirementEditor)
-                .click();
+            .click();
     }
 
     @When("^add scopes to security requirement \"([^\"]*)\" and OAuth scheme \"([^\"]*)\"$")
     public void addScopesToSecurityRequirementAndOAuthScheme(String requirementName, String schemeName, DataTable table) {
-        SelenideElement requirement = MainPageUtils.getMainPageRoot().$(MainPageElements.REQUIREMENTS_SECTION).$$(By.className("security-requirement")).filter(text(requirementName)).first();
+        SelenideElement requirement =
+            MainPageUtils.getMainPageRoot().$(MainPageElements.REQUIREMENTS_SECTION).$$(By.className("security-requirement"))
+                .filter(text(requirementName)).first();
         requirement.$(BasicElements.BUTTON).click();
         requirement.$(BasicElements.A).shouldHave(text("Edit")).click();
 
@@ -276,12 +282,13 @@ public class MainPageSteps {
             scheme.$$(SecurityElements.SCOPE).filter(text(dataRow.get(0))).first().$(SecurityElements.CHECKBOX).click();
         }
         CommonUtils.getButtonWithText("Save", requirementEditor)
-                .click();
+            .click();
     }
 
     @When("^add scopes to scheme \"([^\"]*)\"$")
     public void addScopesToScheme(String scheme, DataTable table) {
-        SelenideElement schemeElement = MainPageUtils.getMainPageRoot().$(MainPageElements.SECURITY_SECTION).$$("security-scheme-row").filter(text(scheme)).first();
+        SelenideElement schemeElement =
+            MainPageUtils.getMainPageRoot().$(MainPageElements.SECURITY_SECTION).$$("security-scheme-row").filter(text(scheme)).first();
         schemeElement.$(BasicElements.BUTTON).click();
         schemeElement.$(BasicElements.A).shouldHave(text("Edit")).click();
 
@@ -294,15 +301,15 @@ public class MainPageSteps {
             CommonUtils.setValueInLabel(dataRow.get(1), scopeElements.get(scopeElements.size() - 1).$(By.className("scope-description")), false);
         }
         CommonUtils.getButtonWithText("Save", schemeEditor)
-                .click();
+            .click();
     }
 
     /**
      * @param table contains parameters:
-     *              section : path | data types
-     *              element name e.g. /myPath
-     *              action : New Sub-Path | Rename | Clone | Delete
-     *              new name for element e.g. /mySuperPath
+     * section : path | data types
+     * element name e.g. /myPath
+     * action : New Sub-Path | Rename | Clone | Delete
+     * new name for element e.g. /mySuperPath
      */
     @When("context click on and manage element")
     public void contextClickOn(DataTable table) {
@@ -315,22 +322,25 @@ public class MainPageSteps {
             CommonUtils.getDropdownMenuItem(dataRow.get(2)).shouldBe(visible).click();
 
             if (!dataRow.get(2).equals("Delete")) {
-                SelenideElement se = CommonUtils.getAppRoot().shouldBe(visible, enabled).shouldNotHave(attribute("disabled")).$(By.className("modal-body")).$("input");
+                SelenideElement se =
+                    CommonUtils.getAppRoot().shouldBe(visible, enabled).shouldNotHave(attribute("disabled")).$(By.className("modal-body")).$("input");
                 se.clear();
                 se.sendKeys(dataRow.get(3));
-                //CommonUtils.getAppRoot().shouldBe(visible, enabled).shouldNotHave(attribute("disabled")).$(By.className("modal-body")).$("input").sendKeys(dataRow.get(3));
-                CommonUtils.getAppRoot().shouldBe(visible, enabled).shouldNotHave(attribute("disabled")).$(By.className("modal-footer")).$(By.className("btn-primary")).click();
+                //CommonUtils.getAppRoot().shouldBe(visible, enabled).shouldNotHave(attribute("disabled")).$(By.className("modal-body")).$("input")
+                // .sendKeys(dataRow.get(3));
+                CommonUtils.getAppRoot().shouldBe(visible, enabled).shouldNotHave(attribute("disabled")).$(By.className("modal-footer"))
+                    .$(By.className("btn-primary")).click();
             }
         }
     }
 
     /**
      * @param table contains parameters:
-     *              page where kebab is located:  path | datatypes | main page | operations
-     *              section where kebab is located: query | header | response | RFD
-     *              name of element : e.g. headerParameter123
-     *              kebab operation: Rename | Delete | ...
-     *              new name for element e.g. /mySuperPath
+     * page where kebab is located:  path | datatypes | main page | operations
+     * section where kebab is located: query | header | response | RFD
+     * name of element : e.g. headerParameter123
+     * kebab operation: Rename | Delete | ...
+     * new name for element e.g. /mySuperPath
      */
     @When("click on kebab menu and manage element")
     public void clickOnKebabMenuAndManageElement(DataTable table) {
@@ -358,14 +368,26 @@ public class MainPageSteps {
                 if ("response".equals(dataRow.get(1))) {
                     //Change response status code
                     OperationUtils.getOperationRoot().$("#statusCodeDropDown").$("#statusCodeDropDown").click();
-                    OperationUtils.getOperationRoot().$("#statusCodeDropDown").$(By.className("dropdown-menu")).$$(BasicElements.A).filter(text(dataRow.get(4))).first().click();
+                    OperationUtils.getOperationRoot().$("#statusCodeDropDown").$(By.className("dropdown-menu")).$$(BasicElements.A)
+                        .filter(text(dataRow.get(4))).first().click();
                 } else {
                     //Change value in input field
-                    SelenideElement se = CommonUtils.getAppRoot().shouldBe(visible, enabled).shouldNotHave(attribute("disabled")).$(By.className("modal-body")).$("input");
+                    SelenideElement se =
+                        CommonUtils.getAppRoot().shouldBe(visible, enabled).shouldNotHave(attribute("disabled")).$(By.className("modal-body"))
+                            .$("input");
                     se.clear();
-                    se.sendKeys(dataRow.get(4));
+                    Arrays.asList(dataRow.get(4).toCharArray()).forEach((character) -> {
+                        se.sendKeys((String.valueOf(character)));
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    });
+                    //                    se.sendKeys(dataRow.get(4));
                 }
-                CommonUtils.getAppRoot().shouldBe(visible, enabled).shouldNotHave(attribute("disabled")).$(By.className("modal-footer")).$(By.className("btn-primary")).click();
+                CommonUtils.getAppRoot().shouldBe(visible, enabled).shouldNotHave(attribute("disabled")).$(By.className("modal-footer"))
+                    .$(By.className("btn-primary")).click();
             }
         }
     }
