@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TestConfiguration {
 
+    public static final double APICURITO_IMAGE_VERSION = 1.7;
+
     public static final String OPENSHIFT_URL = "apicurito.config.openshift.url";
     public static final String OPENSHIFT_TOKEN = "apicurito.config.openshift.token";
     public static final String OPENSHIFT_NAMESPACE = "apicurito.config.openshift.namespace";
@@ -35,7 +37,8 @@ public class TestConfiguration {
     public static final String APICURITO_OPERATOR_ROLE_URL = "apicurito.config.operator.role";
     public static final String APICURITO_OPERATOR_ROLE_BINDING_URL = "apicurito.config.operator.rolebinding";
     public static final String APICURITO_OPERATOR_CR_URL = "apicurito.config.operator.cr";
-    public static final String APICURITO_OPERATOR_UI_IMAGE = "apicurito.config.ui.image";
+    public static final String APICURITO_UI_IMAGE = "apicurito.config.ui.image";
+    public static final String APICURITO_PULL_SECRET = "apicurito.config.pull.secret";
 
     public static final String APICURITO_UI_USERNAME = "apicurito.config.ui.username";
     public static final String APICURITO_UI_PASSWORD = "apicurito.config.ui.password";
@@ -119,8 +122,8 @@ public class TestConfiguration {
         return get().readValue(APICURITO_OPERATOR_ROLE_BINDING_URL);
     }
 
-    public static String apicuritoOperatorUiImage() {
-        return get().readValue(APICURITO_OPERATOR_UI_IMAGE);
+    public static String apicuritoUiImage() {
+        return get().readValue(APICURITO_UI_IMAGE);
     }
 
     public static int getConfigTimeout() {
@@ -145,6 +148,10 @@ public class TestConfiguration {
 
     public static String getAppRoot() {
         return get().readValue(APP_ROOT, "app-root");
+    }
+
+    public static String apicuritoPullSecret() {
+        return get().readValue(APICURITO_PULL_SECRET);
     }
 
     private Properties defaultValues() {

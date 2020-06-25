@@ -40,7 +40,8 @@ public class TestRunner {
 
         if (Boolean.valueOf(TestConfiguration.doReinstall()) && "apicurito".equals(TestConfiguration.openShiftNamespace())) {
             ApicuritoTemplate.cleanNamespace();
-            ApicuritoTemplate.setInputStreams();
+            ApicuritoTemplate.setImageStreams();
+            ApicuritoTemplate.createPullSecret();
             ApicuritoTemplate.deploy();
             if (TestConfiguration.useOperator()) {
                 ApicuritoTemplate.waitForApicurito("apicurito_cr", 3, Component.SERVICE);
@@ -61,7 +62,7 @@ public class TestRunner {
     @AfterClass
     public static void afterTests() {
         log.info("After Tests");
-        if("operatorhub".equals(TestConfiguration.openShiftNamespace())){
+        if ("operatorhub".equals(TestConfiguration.openShiftNamespace())) {
             ApicuritoTemplate.cleanOcpAfterOperatorhubTest();
         }
         if (TestConfiguration.namespaceCleanupAfter()) {
