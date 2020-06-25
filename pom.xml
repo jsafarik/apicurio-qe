@@ -26,6 +26,7 @@
         <apache.http.commons.version>4.5.3</apache.http.commons.version>
         <guava.version>23.0</guava.version>
         <openshift.client.version>4.3.0</openshift.client.version>
+        <org.json.version>20190722</org.json.version>
 
         <!-- leave driver versions empty to use latest driver -->
         <!-- Find supported webdriver version for your chrome browser here:
@@ -120,6 +121,12 @@
             <groupId>io.fabric8</groupId>
             <artifactId>openshift-client</artifactId>
             <version>${openshift.client.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>${org.json.version}</version>
         </dependency>
 
     </dependencies>
