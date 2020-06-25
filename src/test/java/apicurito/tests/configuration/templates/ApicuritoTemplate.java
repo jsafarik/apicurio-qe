@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import apicurito.tests.configuration.Component;
+import apicurito.tests.configuration.TestConfiguration;
+import apicurito.tests.utils.openshift.OpenShiftUtils;
+import cz.xtf.core.waiting.WaiterException;
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.KubernetesList;
+import io.fabric8.kubernetes.api.model.LocalObjectReference;
+import io.fabric8.kubernetes.api.model.ServiceAccount;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.apps.ReplicaSet;
+import io.fabric8.kubernetes.client.KubernetesClientException;
+import io.fabric8.openshift.api.model.Template;
+import lombok.extern.slf4j.Slf4j;
 import static org.assertj.core.api.Assertions.fail;
 
 @Slf4j
@@ -39,14 +53,38 @@ public class ApicuritoTemplate {
         }
     }
 
-    public static void setInputStreams() {
+    public static Deployment getOperatorDeployment() {
+        try (InputStream is = new URL(TestConfiguration.apicuritoOperatorDeploymentUrl()).openStream()) {
+            Deployment deployment = OpenShiftUtils.getInstance().apps().deployments().load(is).get();
+            deployment.getSpec().getTemplate().getSpec().getContainers().get(0).setImage(TestConfiguration.apicuritoOperatorImageUrl());
+            return deployment;
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Unable to read apicurito operator deployment", e);
+        }
+    }
+
+    /**
+     * Apply image stream
+     * If Apicurito UI image is set in properties, add it with the TestConfiguration.APICURITO_IMAGE_VERSION tag
+     */
+    public static void setImageStreams() {
         TestConfiguration.printDivider("Setting up input streams");
-        log.info("Deploying input stream " + TestConfiguration.templateInputStreamUrl());
+
+        log.info("Deploying image stream " + TestConfiguration.templateInputStreamUrl());
         final String output = OpenShiftUtils.binary().execute(
                 "apply",
                 "-n", TestConfiguration.openShiftNamespace(),
                 "-f", TestConfiguration.templateInputStreamUrl()
         );
+
+        if (TestConfiguration.apicuritoUiImage() != null) {
+            log.info("UI image specified, updating image stream with {}", TestConfiguration.apicuritoUiImage());
+            OpenShiftUtils.binary().execute(
+                "tag",
+                TestConfiguration.apicuritoUiImage(),
+                "apicurito-ui:" + TestConfiguration.APICURITO_IMAGE_VERSION
+            );
+        }
     }
 
     public static void deploy() {
@@ -70,6 +108,10 @@ public class ApicuritoTemplate {
         templateParams.put("OPENSHIFT_PROJECT", TestConfiguration.openShiftNamespace());
         templateParams.put("IMAGE_STREAM_NAMESPACE", TestConfiguration.openShiftNamespace());
 
+        if (TestConfiguration.apicuritoUiImage() != null) {
+            templateParams.put("APP_VERSION", TestConfiguration.APICURITO_IMAGE_VERSION);
+        }
+
         // process & create
         KubernetesList processedTemplate = OpenShiftUtils.getInstance().recreateAndProcessTemplate(template, templateParams);
         for (HasMetadata hasMetadata : processedTemplate.getItems()) {
@@ -84,13 +126,30 @@ public class ApicuritoTemplate {
         createInOCP("Service", TestConfiguration.apicuritoOperatorServiceUrl());
         createInOCP("Role", TestConfiguration.apicuritoOperatorRoleUrl());
         createInOCP("Role binding", TestConfiguration.apicuritoOperatorRoleBindingUrl());
-        createInOCP("Operator", TestConfiguration.apicuritoOperatorUrl());
+
+        // if operator image url was specified, used this image
+        if (TestConfiguration.apicuritoOperatorImageUrl() != null) {
+            OpenShiftUtils.getInstance().apps().deployments().create(getOperatorDeployment());
+
+            // Add pull secret to both apicurito and default service accounts - apicurito for operator, default for UI image
+            addImagePullSecretToServiceAccount("default", "apicurito-pull-secret");
+            addImagePullSecretToServiceAccount("apicurito", "apicurito-pull-secret");
+
+            setTestEnvToOperator("RELATED_IMAGE_APICURITO_OPERATOR", TestConfiguration.apicuritoOperatorImageUrl());
+        } else {
+            createInOCP("Operator", TestConfiguration.apicuritoOperatorDeploymentUrl());
+        }
 
         applyInOCP("Custom Resource", TestConfiguration.apicuritoOperatorCrUrl());
 
-        if (TestConfiguration.apicuritoOperatorUiImage() != null) {
-            setTestEnvToOperator("RELATED_IMAGE_APICURITO", TestConfiguration.apicuritoOperatorUiImage());
+        if (TestConfiguration.apicuritoUiImage() != null) {
+            setTestEnvToOperator("RELATED_IMAGE_APICURITO", TestConfiguration.apicuritoUiImage());
         }
+    }
+
+    private static void addImagePullSecretToServiceAccount(String serviceAccountName, String pullSecret) {
+        OpenShiftUtils.getInstance().serviceAccounts().inNamespace(TestConfiguration.openShiftNamespace()).withName(serviceAccountName).edit()
+            .addNewImagePullSecret(pullSecret).done();
     }
 
     private static void setTestEnvToOperator(String nameOfEnv, String valueOfEnv) {
@@ -140,11 +199,12 @@ public class ApicuritoTemplate {
     }
 
     public static void cleanNamespace() {
-        TestConfiguration.printDivider("Deleting namespace...");
+        TestConfiguration.printDivider("Deleting namespace resources");
 
         try {
-            OpenShiftUtils.getInstance().customResourceDefinitions().delete();
-
+            OpenShiftUtils.getInstance().customResourceDefinitions().withName("apicuritos.apicur.io").delete();
+            //OCP4HACK - openshift-client 4.3.0 isn't supported with OCP4 and can't create/delete templates, following line can be removed later
+            OpenShiftUtils.binary().execute("delete", "template", "--all", "--namespace", TestConfiguration.openShiftNamespace());
             OpenShiftUtils.getInstance().apps().statefulSets().inNamespace(TestConfiguration.openShiftNamespace()).delete();
             OpenShiftUtils.getInstance().apps().deployments().inNamespace(TestConfiguration.openShiftNamespace()).delete();
             OpenShiftUtils.getInstance().serviceAccounts().inNamespace(TestConfiguration.openShiftNamespace()).delete();
@@ -152,8 +212,6 @@ public class ApicuritoTemplate {
             // Probably user does not have permissions to delete.. a nice exception will be printed when deploying
         }
         try {
-            //OCP4HACK - openshift-client 4.3.0 isn't supported with OCP4 and can't create/delete templates, following line can be removed later
-            OpenShiftUtils.binary().execute("delete", "template", "--all");
             OpenShiftUtils.getInstance().clean();
 
             List<ReplicaSet> operatorReplicaSets =
@@ -205,5 +263,19 @@ public class ApicuritoTemplate {
         final String output2 = OpenShiftUtils.binary().execute("delete", "operatorsource", "fuse-apicurito", "-n", "openshift-marketplace");
         String available = "src/test/resources/operatorhubFiles/availableOH.yaml";
         ApicuritoTemplate.applyInOCP("Available operators", "openshift-marketplace", available);
+    }
+
+    public static void createPullSecret() {
+        if (TestConfiguration.apicuritoPullSecret() != null) {
+            String pullSecretName = "apicurito-pull-secret";
+            log.info("Creating a pull secret with name " + pullSecretName);
+            OpenShiftUtils.getInstance().secrets().createOrReplaceWithNew()
+                .withNewMetadata()
+                .withName(pullSecretName)
+                .endMetadata()
+                .withData(Collections.singletonMap(".dockerconfigjson", TestConfiguration.apicuritoPullSecret()))
+                .withType("kubernetes.io/dockerconfigjson")
+                .done();
+        }
     }
 }

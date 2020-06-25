@@ -12,6 +12,8 @@ import java.util.Properties;
 @Slf4j
 public class TestConfiguration {
 
+    public static final String APICURITO_IMAGE_VERSION = "2.0";
+
     public static final String OPENSHIFT_URL = "apicurito.config.openshift.url";
     public static final String OPENSHIFT_TOKEN = "apicurito.config.openshift.token";
     public static final String OPENSHIFT_NAMESPACE = "apicurito.config.openshift.namespace";
@@ -28,14 +30,16 @@ public class TestConfiguration {
 
     public static final String APP_ROOT = "apicurito.config.app.root";
 
-    public static final String APICURITO_TEMPLATE_USE_OPERATOR = "apicurito.config.template.use.operator";
+    public static final String APICURITO_USE_OPERATOR = "apicurito.config.use.operator";
     public static final String APICURITO_OPERATOR_CRD_URL = "apicurito.config.operator.crd";
-    public static final String APICURITO_OPERATOR_URL = "apicurito.config.operator.url";
+    public static final String APICURITO_OPERATOR_DEPLOYMENT_URL = "apicurito.config.operator.deployment.url";
+    public static final String APICURITO_OPERATOR_IMAGE_URL = "apicurito.config.operator.image.url";
     public static final String APICURITO_OPERATOR_SERVICE_URL = "apicurito.config.operator.service";
     public static final String APICURITO_OPERATOR_ROLE_URL = "apicurito.config.operator.role";
     public static final String APICURITO_OPERATOR_ROLE_BINDING_URL = "apicurito.config.operator.rolebinding";
     public static final String APICURITO_OPERATOR_CR_URL = "apicurito.config.operator.cr";
-    public static final String APICURITO_OPERATOR_UI_IMAGE = "apicurito.config.ui.image";
+    public static final String APICURITO_UI_IMAGE = "apicurito.config.ui.image";
+    public static final String APICURITO_PULL_SECRET = "apicurito.config.pull.secret";
     public static final String APICURITO_DEPLOY_OPERATORHUB = "apicurito.config.deploy.operatorhub";
 
     public static final String APICURITO_UI_USERNAME = "apicurito.config.ui.username";
@@ -101,13 +105,14 @@ public class TestConfiguration {
     }
 
     public static boolean useOperator() {
-        return Boolean.parseBoolean(get().readValue(APICURITO_TEMPLATE_USE_OPERATOR));
+        return Boolean.parseBoolean(get().readValue(APICURITO_USE_OPERATOR));
     }
 
     public static boolean deployOperatorHub() {
         return Boolean.parseBoolean(get().readValue(APICURITO_DEPLOY_OPERATORHUB, "false"));
     }
 
+    // pull secret for quay (not for pulling images)
     public static String getPullSecret() {
         return get().readValue(PULL_SECRET);
     }
@@ -120,8 +125,12 @@ public class TestConfiguration {
         return get().readValue(APICURITO_OPERATOR_CR_URL);
     }
 
-    public static String apicuritoOperatorUrl() {
-        return get().readValue(APICURITO_OPERATOR_URL);
+    public static String apicuritoOperatorDeploymentUrl() {
+        return get().readValue(APICURITO_OPERATOR_DEPLOYMENT_URL);
+    }
+
+    public static String apicuritoOperatorImageUrl() {
+        return get().readValue(APICURITO_OPERATOR_IMAGE_URL);
     }
 
     public static String apicuritoOperatorServiceUrl() {
@@ -136,8 +145,8 @@ public class TestConfiguration {
         return get().readValue(APICURITO_OPERATOR_ROLE_BINDING_URL);
     }
 
-    public static String apicuritoOperatorUiImage() {
-        return get().readValue(APICURITO_OPERATOR_UI_IMAGE);
+    public static String apicuritoUiImage() {
+        return get().readValue(APICURITO_UI_IMAGE);
     }
 
     public static int getConfigTimeout() {
@@ -194,6 +203,10 @@ public class TestConfiguration {
         return get().readValue(APICURITO_UI_PASSWORD);
     }
 
+    // pull secret for pulling images
+    public static String apicuritoPullSecret() {
+        return get().readValue(APICURITO_PULL_SECRET);
+    }
 
     private Properties defaultValues() {
         final Properties props = new Properties();
@@ -205,9 +218,9 @@ public class TestConfiguration {
             props.setProperty(APICURITO_OPERATOR_CRD_URL, String.format(
                     "https://raw.githubusercontent.com/Apicurio/apicurio-operators/master/apicurito/deploy/crds/apicur_v1alpha1_apicurito_crd.yaml"));
         }
-        if (props.getProperty(APICURITO_OPERATOR_URL) == null) {
-            props.setProperty(APICURITO_OPERATOR_URL,
-                    String.format("https://raw.githubusercontent.com/Apicurio/apicurio-operators/master/apicurito/deploy/operator.yaml"));
+        if (props.getProperty(APICURITO_OPERATOR_DEPLOYMENT_URL) == null) {
+            props.setProperty(APICURITO_OPERATOR_DEPLOYMENT_URL,
+                String.format("https://raw.githubusercontent.com/Apicurio/apicurio-operators/master/apicurito/deploy/operator.yaml"));
         }
         if (props.getProperty(APICURITO_OPERATOR_CR_URL) == null) {
             props.setProperty(APICURITO_OPERATOR_CR_URL, String.format(
@@ -226,7 +239,7 @@ public class TestConfiguration {
                     String.format("https://raw.githubusercontent.com/Apicurio/apicurio-operators/master/apicurito/deploy/role_binding.yaml"));
         }
 
-        props.setProperty(APICURITO_TEMPLATE_USE_OPERATOR, "true");
+        props.setProperty(APICURITO_USE_OPERATOR, "true");
 
         // Copy syndesis properties to their xtf counterparts - used by binary oc client
         if (System.getProperty("xtf.openshift.url") == null) {

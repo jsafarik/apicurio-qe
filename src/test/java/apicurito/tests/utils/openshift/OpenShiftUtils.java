@@ -52,10 +52,12 @@ public final class OpenShiftUtils {
     private OpenShiftUtils() {
         if (xtfUtils == null) {
             final OpenShiftConfigBuilder openShiftConfigBuilder = new OpenShiftConfigBuilder()
-                    .withMasterUrl(TestConfiguration.openShiftUrl())
-                    .withTrustCerts(true)
-                    .withRequestTimeout(120_000)
-                    .withNamespace(TestConfiguration.openShiftNamespace());
+                .withMasterUrl(TestConfiguration.openShiftUrl())
+                .withTrustCerts(true)
+                .withRequestTimeout(120_000)
+                .withNamespace(TestConfiguration.openShiftNamespace())
+                .withUsername(TestConfiguration.getOpenshiftUsername())
+                .withPassword(TestConfiguration.getOpenshiftPassword());
             if (!TestConfiguration.openShiftToken().isEmpty()) {
                 //if token is provided, lets use it
                 //otherwise f8 client should be able to leverage ~/.kube/config or mounted secrets
@@ -67,10 +69,12 @@ public final class OpenShiftUtils {
 
     public static OpenShift getAnotherOpenShiftUtils(String namespace) {
         final OpenShiftConfigBuilder openShiftConfigBuilder = new OpenShiftConfigBuilder()
-                .withMasterUrl(TestConfiguration.openShiftUrl())
-                .withTrustCerts(true)
-                .withRequestTimeout(120_000)
-                .withNamespace(namespace);
+            .withMasterUrl(TestConfiguration.openShiftUrl())
+            .withTrustCerts(true)
+            .withRequestTimeout(120_000)
+            .withNamespace(namespace)
+            .withUsername(TestConfiguration.getOpenshiftUsername())
+            .withPassword(TestConfiguration.getOpenshiftPassword());
         if (!TestConfiguration.openShiftToken().isEmpty()) {
             //if token is provided, lets use it
             //otherwise f8 client should be able to leverage ~/.kube/config or mounted secrets
@@ -101,10 +105,10 @@ public final class OpenShiftUtils {
 
     public static Optional<Pod> getPodByPartialName(String partialName) {
         Optional<Pod> oPod = OpenShiftUtils.getInstance().getPods().stream()
-                .filter(p -> p.getMetadata().getName().contains(partialName))
-                .filter(p -> !p.getMetadata().getName().contains("deploy"))
-                .filter(p -> !p.getMetadata().getName().contains("build"))
-                .findFirst();
+            .filter(p -> p.getMetadata().getName().contains(partialName))
+            .filter(p -> !p.getMetadata().getName().contains("deploy"))
+            .filter(p -> !p.getMetadata().getName().contains("build"))
+            .findFirst();
         return oPod;
     }
 
@@ -120,13 +124,13 @@ public final class OpenShiftUtils {
 
     public static String getPodLogs(String podPartialName) {
         Optional<Pod> integrationPod = OpenShiftUtils.getInstance().getPods().stream()
-                .filter(p -> !p.getMetadata().getName().contains("build"))
-                .filter(p -> !p.getMetadata().getName().contains("deploy"))
-                .filter(p -> p.getMetadata().getName().contains(podPartialName)).findFirst();
+            .filter(p -> !p.getMetadata().getName().contains("build"))
+            .filter(p -> !p.getMetadata().getName().contains("deploy"))
+            .filter(p -> p.getMetadata().getName().contains(podPartialName)).findFirst();
         if (integrationPod.isPresent()) {
             String logText = OpenShiftUtils.getInstance().getPodLog(integrationPod.get());
             assertThat(logText)
-                    .isNotEmpty();
+                .isNotEmpty();
             return logText;
         } else {
             fail("No pod found for pod name: " + podPartialName);
@@ -139,23 +143,23 @@ public final class OpenShiftUtils {
      * Some of the resources can't be created by f8 client, therefore we manually post them to corresponding endpoint.
      *
      * @param kind kind of the resource
-     * @param o    object instance
+     * @param o object instance
      */
     public static void create(String kind, Object o) {
         try {
             final String content = Serialization.jsonMapper().writeValueAsString(o);
             StringBuilder url = new StringBuilder();
-            String[] kinds = new String[]{"serviceaccount", "role", "rolebinding", "clusterrole", "clusterrolebinding", "deployment"};
+            String[] kinds = new String[] {"serviceaccount", "role", "rolebinding", "clusterrole", "clusterrolebinding", "deployment"};
             if (StringUtils.equalsAnyIgnoreCase(kind, kinds)) {
                 url.append("/api")
-                        .append(kind.toLowerCase().equals("serviceaccount") ? "" : "s")
-                        .append("/")
-                        .append(((HasMetadata) o).getApiVersion())
-                        .append("/namespaces/")
-                        .append(TestConfiguration.openShiftNamespace())
-                        .append("/")
-                        .append(kind.toLowerCase())
-                        .append("s");
+                    .append(kind.toLowerCase().equals("serviceaccount") ? "" : "s")
+                    .append("/")
+                    .append(((HasMetadata) o).getApiVersion())
+                    .append("/namespaces/")
+                    .append(TestConfiguration.openShiftNamespace())
+                    .append("/")
+                    .append(kind.toLowerCase())
+                    .append("s");
             } else {
                 // This can be created by the client, so create it
                 getInstance().createResources((HasMetadata) o);
@@ -177,7 +181,7 @@ public final class OpenShiftUtils {
     /**
      * Invoke openshift's API. Only part behind master url is necessary and the path must start with slash.
      *
-     * @param url  api path
+     * @param url api path
      * @param body body to send as JSON
      * @return response object
      */
@@ -185,10 +189,10 @@ public final class OpenShiftUtils {
         url = TestConfiguration.openShiftUrl() + url;
         log.debug(url);
         Response response = HttpUtils.doPostRequest(
-                url,
-                body,
-                "application/json",
-                Headers.of("Authorization", "Bearer " + OpenShiftUtils.getInstance().getConfiguration().getOauthToken())
+            url,
+            body,
+            "application/json",
+            Headers.of("Authorization", "Bearer " + OpenShiftUtils.getInstance().getConfiguration().getOauthToken())
         );
         log.debug("Response code: " + response.code());
         try {

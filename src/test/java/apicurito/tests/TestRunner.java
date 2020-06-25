@@ -26,21 +26,32 @@ public class TestRunner {
     @BeforeClass
     public static void beforeTests() {
 
+        boolean createdProject = false;
+
         if (OpenShiftUtils.xtf().getProject(TestConfiguration.openShiftNamespace()) == null) {
+            createdProject = true;
             log.info("Creating new project " + TestConfiguration.openShiftNamespace());
-            final String output = OpenShiftUtils.binary().execute(
-                    "new-project", TestConfiguration.openShiftNamespace()
-            );
-            try {
-                Thread.sleep(10 * 1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            OpenShiftUtils.getInstance().createProjectRequest(TestConfiguration.openShiftNamespace());
+            if (OpenShiftUtils.getInstance().getProject() == null) {
+                log.info("Waiting for " + TestConfiguration.openShiftNamespace() + " to be created");
+                try {
+                    Thread.sleep(10 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                log.info(TestConfiguration.openShiftNamespace() + " project created");
             }
         }
 
-        if (Boolean.valueOf(TestConfiguration.doReinstall()) && "apicurito".equals(TestConfiguration.openShiftNamespace())) {
+        if (Boolean.valueOf(TestConfiguration.doReinstall()) && !createdProject) {
             ApicuritoTemplate.cleanNamespace();
-            ApicuritoTemplate.setInputStreams();
+        }
+
+        // TODO: don't rely on namespace name, rather use properties file/maven argument
+        if ("apicurito".equals(TestConfiguration.openShiftNamespace())) {
+            ApicuritoTemplate.createPullSecret();
+            ApicuritoTemplate.setImageStreams();
             ApicuritoTemplate.deploy();
             if (TestConfiguration.useOperator()) {
                 ApicuritoTemplate.waitForApicurito("component", 6, Component.SERVICE);
